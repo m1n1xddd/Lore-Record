@@ -17,7 +17,7 @@ import net.minecraftforge.fml.loading.FMLPaths;
  */
 public final class LoreExporter {
 
-    /** 导出目录：<游戏目录>/lore_record */
+    /** 导出目录：游戏/lore_record */
     public static final Path DIR = FMLPaths.GAMEDIR.get().resolve("lore_record");
 
     /** 暂存文件*/
