@@ -18,11 +18,10 @@ import net.minecraft.world.item.WrittenBookItem;
  */
 public final class LoreBook {
 
-    /** 用于识别"这是本模组生成的成书" */
     private static final String TAG_LORE_RECORD = "lorerecord";
-    /** 原版书界面一页最多显示 14 行 */
+    /** 行数 */
     private static final int LINES_PER_PAGE = 14;
-    /** 书页每行约能容纳的字符数*/
+    /** 字符数*/
     private static final int CHARS_PER_LINE = 19;
 
     private LoreBook() {
@@ -33,21 +32,20 @@ public final class LoreBook {
      *
      * @param title    书名
      * @param author   作者
-     * @param messages 要写入的消息
+     * @param messages 消息
      */
     public static ItemStack create(String title, String author, List<Component> messages) {
         List<String> pages = new ArrayList<>();
         MutableComponent page = Component.empty();
         int usedLines = 0;
         for (Component msg : messages) {
-            // 原版书最多 100 页，预留 1 页放截断提示
             if (pages.size() >= WrittenBookItem.MAX_PAGES - 1) {
                 page.append(Component.literal("……记录过长，只保留前 " + pages.size() + " 页"));
                 break;
             }
-            int lines = estimatedLines(msg) + 1; // +1 是消息行尾的换行
+            int lines = estimatedLines(msg) + 1; // 换行
             if (usedLines > 0 && usedLines + lines > LINES_PER_PAGE) {
-                pages.add(flushPage(page)); // 当前页已满，翻页
+                pages.add(flushPage(page));
                 page = Component.empty();
                 usedLines = 0;
             }
@@ -72,7 +70,7 @@ public final class LoreBook {
         tag.putString(WrittenBookItem.TAG_AUTHOR, author);
         tag.putInt(WrittenBookItem.TAG_GENERATION, 0);
         tag.putBoolean(WrittenBookItem.TAG_RESOLVED, true);
-        tag.putBoolean(TAG_LORE_RECORD, true); // 盖上本模组的"印章"
+        tag.putBoolean(TAG_LORE_RECORD, true);
         ListTag list = new ListTag();
         for (String page : pages) {
             list.add(StringTag.valueOf(page));
@@ -93,7 +91,7 @@ public final class LoreBook {
         return pages;
     }
 
-
+    //翻页
     private static String flushPage(MutableComponent page) {
         return Component.Serializer.toJson(page);
     }
