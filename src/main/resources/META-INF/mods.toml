@@ -1,0 +1,27 @@
+# Mod Loader
+modLoader="javafml"
+# Forge/FML 版本范围
+loaderVersion="${loader_version_range}"
+# 模组许可证
+license="${mod_license}"
+
+[[mods]]
+modId="lorerecord"
+version="${mod_version}"
+displayName="Lore Record"
+authors="m1n1xddd"
+description='''记录聊天内容？然后可以写成，额，一本书，对。你可以在游戏内阅读。饿啊，咕咕嘎嘎!'''
+
+[[dependencies.${mod_id}]]
+    modId="forge"
+    mandatory=true
+    versionRange="${forge_version_range}"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.${mod_id}]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="${minecraft_version_range}"
+    ordering="NONE"
+    side="BOTH"

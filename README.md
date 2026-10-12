@@ -1,2 +1,3 @@
-# Lore-Record
-A minecraft mod that records minecraft chat messages and export to html,txt and more idk
+# 构建命令：.\gradlew.bat build
+
+# 游戏版本：Forge 1.20.1 
