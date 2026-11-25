@@ -32,7 +32,7 @@ public final class ChatRecorder {
     /**
      * 已记录的消息
      */
-    private static final List<Component> messages = new ArrayList<>();
+    private static final List<RecordEntry> messages = new ArrayList<>();
 
     private ChatRecorder() {
     }
@@ -45,7 +45,7 @@ public final class ChatRecorder {
         }
         MessageClassifier.Category category = MessageClassifier.categorize(event);
         if (MessageClassifier.shouldRecord(category)) {
-            messages.add(event.getMessage());
+            messages.add(RecordEntry.capture(event.getMessage(), category));
         }
     }
 
@@ -100,6 +100,17 @@ public final class ChatRecorder {
         return 0;
     }
 
+    static int pause(CommandSourceStack source){
+        if (recording) {
+            LoreExporter.savePending(recordName, messages);
+            reset();
+            reply(source, "记录已暂停", ChatFormatting.YELLOW);
+            return 1;
+        }
+        reply(source, "当前没有进行中的记录", ChatFormatting.RED);
+        return 0;
+    }
+
     static int resume(CommandSourceStack source) {
         if (recording) {
             reply(source, "已经在记录中了", ChatFormatting.RED);
@@ -123,14 +134,15 @@ public final class ChatRecorder {
         if (player == null) {
             return 0;
         }
-        List<Component> recorded = LoreExporter.loadMessages(name);
+        List<RecordEntry> recorded = LoreExporter.loadMessages(name);
         if (recorded == null) {
             List<String> existing = LoreExporter.listRecords();
             reply(source, existing.isEmpty() ? "记录不存在，还没有任何已保存的记录"
                     : "记录不存在，已有记录：" + String.join("、", existing), ChatFormatting.RED);
             return 0;
         }
-        ItemStack book = LoreBook.create(name, player.getName().getString(), recorded);
+        List<Component> pages = recorded.stream().map(RecordEntry::messagesWithStyle).toList();
+        ItemStack book = LoreBook.create(name, player.getName().getString(), pages);
 
 
         IntegratedServer server = Minecraft.getInstance().getSingleplayerServer();
@@ -160,7 +172,7 @@ public final class ChatRecorder {
     }
 
 
-    private static void exportAndReply(CommandSourceStack source, String name, List<Component> toSave) {
+    private static void exportAndReply(CommandSourceStack source, String name, List<RecordEntry> toSave) {
         java.nio.file.Path dir = LoreExporter.export(name, toSave);
         reply(source, "记录已保存。保存路径：" + dir + "。使用/log book " + name + " 来获取该记录书", ChatFormatting.GRAY);
     }

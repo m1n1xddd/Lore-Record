@@ -27,6 +27,8 @@ public final class LogCommands {
                                         StringArgumentType.getString(ctx, "name")))))
                 .then(Commands.literal("end")
                         .executes(ctx -> ChatRecorder.end(ctx.getSource())))
+                .then(Commands.literal("pause")
+                        .executes(ctx -> ChatRecorder.pause(ctx.getSource())))
                 .then(Commands.literal("continue")
                         .executes(ctx -> ChatRecorder.resume(ctx.getSource())))
                 .then(Commands.literal("book")

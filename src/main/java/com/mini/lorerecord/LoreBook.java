@@ -32,7 +32,7 @@ public final class LoreBook {
      *
      * @param title    书名
      * @param author   作者
-     * @param messages 消息
+     * @param messages 聊天记录
      */
     public static ItemStack create(String title, String author, List<Component> messages) {
         List<String> pages = new ArrayList<>();

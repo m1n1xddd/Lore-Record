@@ -27,7 +27,7 @@ public final class LoreExporter {
     }
 
     /** 记录名+消息列表 */
-    public record Pending(String name, List<Component> messages) {
+    public record Pending(String name, List<RecordEntry> messages) {
     }
 
 
@@ -35,13 +35,13 @@ public final class LoreExporter {
         return Files.isRegularFile(PENDING);
     }
 
-    public static void savePending(String name, List<Component> msgs) {
+    public static void savePending(String name, List<RecordEntry> msgs) {
         try {
             Files.createDirectories(DIR);
             List<String> lines = new ArrayList<>();
             lines.add(name);
-            for (Component msg : msgs) {
-                lines.add(Component.Serializer.toJson(msg));
+            for (RecordEntry msg : msgs) {
+                lines.add(msg.toJson());
             }
             Files.write(PENDING, lines, StandardCharsets.UTF_8,
                     StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
@@ -71,8 +71,8 @@ public final class LoreExporter {
         }
     }
 
-    public static Path export(String name, List<Component> msgs) {
-        Path dir = DIR.resolve(name); // 每条记录独占一个子文件夹，重新导出同名记录时直接覆盖
+    public static Path export(String name, List<RecordEntry> msgs) {
+        Path dir = DIR.resolve(name); // 导出同名记录直接覆盖
         try {
             Files.createDirectories(dir);
             Files.writeString(dir.resolve(name + ".txt"), toPlainText(msgs), StandardCharsets.UTF_8);
@@ -85,7 +85,7 @@ public final class LoreExporter {
         return dir;
     }
 
-    public static List<Component> loadMessages(String name) {
+    public static List<RecordEntry> loadMessages(String name) {
         Path file = DIR.resolve(name).resolve(name + ".json");
         if (!Files.isRegularFile(file)) {
             return null;
@@ -126,33 +126,33 @@ public final class LoreExporter {
     }
 
 
-    private static List<String> toJsonLines(List<Component> msgs) {
+    private static List<String> toJsonLines(List<RecordEntry> msgs) {
         List<String> lines = new ArrayList<>();
-        for (Component msg : msgs) {
-            lines.add(Component.Serializer.toJson(msg));
+        for (RecordEntry msg : msgs) {
+            lines.add(msg.toJson());
         }
         return lines;
     }
 
-    private static String toPlainText(List<Component> msgs) {
+    private static String toPlainText(List<RecordEntry> msgs) {
         StringBuilder sb = new StringBuilder();
-        for (Component msg : msgs) {
-            sb.append(msg.getString()).append(System.lineSeparator());
+        for (RecordEntry msg : msgs) {
+            sb.append(msg.messagesWithStyle().getString()).append(System.lineSeparator());
         }
         return sb.toString();
     }
 
-    private static String toMarkdown(String name, List<Component> msgs) {
+    private static String toMarkdown(String name, List<RecordEntry> msgs) {
         StringBuilder sb = new StringBuilder();
         sb.append("#### &lt; ").append(name).append(" &gt; 记录开始。\n\n");
-        for (Component msg : msgs) {
-            sb.append("- ").append(msg.getString().replace("\n", " ")).append('\n');
+        for (RecordEntry msg : msgs) {
+            sb.append("- ").append(msg.messagesWithStyle().getString().replace("\n", " ")).append('\n');
         }
         sb.append("#### 记录结束。\n");
         return sb.toString();
     }
 
-    private static String toHtmlDocument(String name, List<Component> msgs) {
+    private static String toHtmlDocument(String name, List<RecordEntry> msgs) {
         boolean light = Config.HTML_THEME.get() == Config.HtmlTheme.LIGHT;
         String background = light ? "#f6f5f5" : "#1e1e1e";
         String foreground = light ? "#000000" : "#ffffff";
@@ -167,8 +167,8 @@ public final class LoreExporter {
         sb.append("</style>\n</head>\n<body>\n")
                 .append("<h4 style=\"color:#898787;\">")
                 .append("&lt;").append(escapeHtml(name)).append("&gt; 记录开始。</h4>\n");
-        for (Component msg : msgs) {
-            sb.append("<p>").append(toHtmlLine(msg)).append("</p>\n");
+        for (RecordEntry msg : msgs) {
+            sb.append("<p>").append(toHtmlLine(msg.messagesWithStyle())).append("</p>\n");
         }
         sb.append("\n<h4 style=\"color:#898787;\">\n记录结束。</h4>\n");
         sb.append("</body>\n</html>\n");
@@ -212,15 +212,15 @@ public final class LoreExporter {
         return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;");
     }
 
-    private static List<Component> parseJsonLines(List<String> lines) {
-        List<Component> msgs = new ArrayList<>();
+    private static List<RecordEntry> parseJsonLines(List<String> lines) {
+        List<RecordEntry> msgs = new ArrayList<>();
         for (String line : lines) {
             if (line.isBlank()) {
                 continue;
             }
-            Component component = Component.Serializer.fromJson(line);
-            if (component != null) {
-                msgs.add(component);
+            RecordEntry entry = RecordEntry.fromJson(line);
+            if (entry != null) {
+                msgs.add(entry);
             }
         }
         return msgs;

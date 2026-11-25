@@ -17,22 +17,19 @@ import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
-/**
- * 网络层
- */
 @Mod.EventBusSubscriber(modid = LoreRecord.MODID)
 public final class LoreNetwork {
 
     /** 频道协议版本 */
     private static final String VERSION = "1";
-    /** 单页 JSON 的最大长度 */
+    /** 单页 JSON 最大长度 */
     private static final int MAX_PAGE_LENGTH = 8192;
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.parse(LoreRecord.MODID + ":main"),
             () -> VERSION, s -> true, s -> true);
 
-    /** 服务器是否安装了模组（*/
+    /** 是否安装了模组（*/
     private static volatile boolean serverInstalled;
 
     private LoreNetwork() {
@@ -82,10 +79,10 @@ public final class LoreNetwork {
 
         static GiveBookPacket decode(FriendlyByteBuf buf) {
             String title = buf.readUtf(WrittenBookItem.TITLE_MAX_LENGTH);
-            int count = Math.min(buf.readVarInt(), WrittenBookItem.MAX_PAGES); // 防恶意超大页数
+            int count = Math.min(buf.readVarInt(), WrittenBookItem.MAX_PAGES);
             List<String> pages = new ArrayList<>(count);
             for (int i = 0; i < count; i++) {
-                pages.add(buf.readUtf(MAX_PAGE_LENGTH)); // 超长直接抛异常断开，不浪费内存
+                pages.add(buf.readUtf(MAX_PAGE_LENGTH));
             }
             return new GiveBookPacket(title, pages);
         }
@@ -96,10 +93,9 @@ public final class LoreNetwork {
                 if (player == null) {
                     return;
                 }
-                // 作者名取自服务端视角的连接身份，而非网络包内容
                 ItemStack book = LoreBook.fromPages(msg.title, player.getName().getString(), msg.pages);
                 if (!player.getInventory().add(book)) {
-                    player.drop(book, false); // 背包满了就丢在脚下
+                    player.drop(book, false);
                 }
             });
             ctx.get().setPacketHandled(true);

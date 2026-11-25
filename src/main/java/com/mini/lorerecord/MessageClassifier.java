@@ -20,20 +20,17 @@ public final class MessageClassifier {
         JOIN_LEAVE,
         /** 玩家私聊 */
         PRIVATE,
-        /** 其他系统消息（tellraw、命令反馈等） */
+        /** 其他系统消息 */
         SYSTEM_OTHER
     }
 
     private MessageClassifier() {
     }
 
-    /** 判断一条消息的类别 */
     public static Category categorize(ClientChatReceivedEvent event) {
-        // 玩家聊天有专属子类事件
         if (event instanceof ClientChatReceivedEvent.Player) {
             return Category.PLAYER_CHAT;
         }
-        // 系统消息大多由翻译组件构成，通过翻译 key 判断具体类型
         if (event.getMessage().getContents() instanceof TranslatableContents contents) {
             String key = contents.getKey();
             if (key.startsWith("death.")) {
@@ -53,10 +50,9 @@ public final class MessageClassifier {
         return Category.SYSTEM_OTHER;
     }
 
-    /** 按配置决定该类消息是否需要记录 */
     public static boolean shouldRecord(Category category) {
         return switch (category) {
-            case PLAYER_CHAT -> true; // 玩家消息始终记录
+            case PLAYER_CHAT -> true; // 始终记录
             case DEATH -> Config.RECORD_DEATH.get();
             case ADVANCEMENT -> Config.RECORD_ADVANCEMENT.get();
             case JOIN_LEAVE -> Config.RECORD_JOIN_LEAVE.get();

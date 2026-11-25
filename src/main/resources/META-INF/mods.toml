@@ -10,7 +10,7 @@ modId="lorerecord"
 version="${mod_version}"
 displayName="Lore Record"
 authors="m1n1xddd"
-description='''记录聊天内容？然后可以写成，额，一本书，对。你可以在游戏内阅读。饿啊，咕咕嘎嘎!'''
+description='''记录聊天内容？然后可以生成，额，书，对。你可以在游戏内阅读。饿啊，咕咕嘎嘎!'''
 
 [[dependencies.${mod_id}]]
     modId="forge"
