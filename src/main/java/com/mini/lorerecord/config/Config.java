@@ -1,4 +1,4 @@
-package com.mini.lorerecord;
+package com.mini.lorerecord.config;
 
 import net.minecraftforge.common.ForgeConfigSpec;
 

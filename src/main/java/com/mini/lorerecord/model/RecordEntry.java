@@ -1,22 +1,21 @@
-package com.mini.lorerecord;
+package com.mini.lorerecord.model;
+import com.mini.lorerecord.classifier.MessageClassifier;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.world.entity.vehicle.Minecart;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.Objects;
 
-import static com.mini.lorerecord.MessageClassifier.Category.PLAYER_CHAT;
-import static com.mini.lorerecord.MessageClassifier.Category.PRIVATE;
+import static com.mini.lorerecord.classifier.MessageClassifier.Category.PLAYER_CHAT;
+import static com.mini.lorerecord.classifier.MessageClassifier.Category.PRIVATE;
 
 public record RecordEntry(
         String time,
@@ -24,16 +23,22 @@ public record RecordEntry(
         Component message,
         MessageClassifier.Category category
 ) {
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final Map<String, ChatFormatting> THEMES = Map.of(
             "minecraft:overworld",ChatFormatting.GREEN,
             "minecraft:the_nether",ChatFormatting.RED,
             "minecraft:the_end",ChatFormatting.LIGHT_PURPLE
     );
-    public  static RecordEntry capture(Component msg, MessageClassifier.Category category){
+
+    public static RecordEntry capture(Component msg, MessageClassifier.Category category){
         LocalPlayer pl = Minecraft.getInstance().player;
         String dim = pl == null ? "" : pl.level().dimension().location().toString();
         return new RecordEntry(LocalDateTime.now().format(FORMATTER),dim,msg,category);
+    }
+
+    /** 服务端 */
+    public static RecordEntry captureServer(Component msg, MessageClassifier.Category category, String dim){
+        return new RecordEntry(LocalDateTime.now().format(FORMATTER), dim, msg, category);
     }
 
     private  ChatFormatting theme(){

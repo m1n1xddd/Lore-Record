@@ -1,4 +1,7 @@
-package com.mini.lorerecord;
+package com.mini.lorerecord.export;
+import com.mini.lorerecord.LoreRecord;
+import com.mini.lorerecord.config.Config;
+import com.mini.lorerecord.model.RecordEntry;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -17,33 +20,46 @@ import net.minecraftforge.fml.loading.FMLPaths;
  */
 public final class LoreExporter {
 
-    /** 导出目录：游戏/lore_record */
+    /** 导出目录*/
     public static final Path DIR = FMLPaths.GAMEDIR.get().resolve("lore_record");
 
-    /** 暂存文件*/
     private static final Path PENDING = DIR.resolve("pending_record.txt");
+
+    public static final Path GLOBAL_DIR = DIR.resolve("global");
+
+    private static final Path GLOBAL_PENDING = GLOBAL_DIR.resolve("pending_record.txt");
 
     private LoreExporter() {
     }
 
-    /** 记录名+消息列表 */
+
     public record Pending(String name, List<RecordEntry> messages) {
     }
 
 
+    /** 是否有暂存 */
     public static boolean hasPending() {
-        return Files.isRegularFile(PENDING);
+        return hasPending(false);
+    }
+
+    public static boolean hasPending(boolean global) {
+        return Files.isRegularFile(global ? GLOBAL_PENDING : PENDING);
     }
 
     public static void savePending(String name, List<RecordEntry> msgs) {
+        savePending(name, msgs, false);
+    }
+
+    public static void savePending(String name, List<RecordEntry> msgs, boolean global) {
+        Path pending = global ? GLOBAL_PENDING : PENDING;
         try {
-            Files.createDirectories(DIR);
+            Files.createDirectories(pending.getParent());
             List<String> lines = new ArrayList<>();
             lines.add(name);
             for (RecordEntry msg : msgs) {
                 lines.add(msg.toJson());
             }
-            Files.write(PENDING, lines, StandardCharsets.UTF_8,
+            Files.write(pending, lines, StandardCharsets.UTF_8,
                     StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
         } catch (IOException e) {
             LoreRecord.LOGGER.error("暂存聊天记录失败", e);
@@ -51,8 +67,13 @@ public final class LoreExporter {
     }
 
     public static Pending loadPending() {
+        return loadPending(false);
+    }
+
+    public static Pending loadPending(boolean global) {
+        Path pending = global ? GLOBAL_PENDING : PENDING;
         try {
-            List<String> lines = Files.readAllLines(PENDING, StandardCharsets.UTF_8);
+            List<String> lines = Files.readAllLines(pending, StandardCharsets.UTF_8);
             if (lines.isEmpty()) {
                 return null;
             }
@@ -64,15 +85,23 @@ public final class LoreExporter {
     }
 
     public static void deletePending() {
+        deletePending(false);
+    }
+
+    public static void deletePending(boolean global) {
         try {
-            Files.deleteIfExists(PENDING);
+            Files.deleteIfExists(global ? GLOBAL_PENDING : PENDING);
         } catch (IOException e) {
             LoreRecord.LOGGER.error("删除暂存文件失败", e);
         }
     }
 
     public static Path export(String name, List<RecordEntry> msgs) {
-        Path dir = DIR.resolve(name); // 导出同名记录直接覆盖
+        return export(name, msgs, false);
+    }
+
+    public static Path export(String name, List<RecordEntry> msgs, boolean global) {
+        Path dir = (global ? GLOBAL_DIR : DIR).resolve(name); // 导出同名记录直接覆盖
         try {
             Files.createDirectories(dir);
             Files.writeString(dir.resolve(name + ".txt"), toPlainText(msgs), StandardCharsets.UTF_8);
@@ -86,7 +115,11 @@ public final class LoreExporter {
     }
 
     public static List<RecordEntry> loadMessages(String name) {
-        Path file = DIR.resolve(name).resolve(name + ".json");
+        return loadMessages(name, false);
+    }
+
+    public static List<RecordEntry> loadMessages(String name, boolean global) {
+        Path file = (global ? GLOBAL_DIR : DIR).resolve(name).resolve(name + ".json");
         if (!Files.isRegularFile(file)) {
             return null;
         }
@@ -112,12 +145,19 @@ public final class LoreExporter {
     }
 
     public static List<String> listRecords() {
+        return listRecords(false);
+    }
+
+    public static List<String> listRecords(boolean global) {
+        Path dir = global ? GLOBAL_DIR : DIR;
         List<String> names = new ArrayList<>();
-        if (!Files.isDirectory(DIR)) {
+        if (!Files.isDirectory(dir)) {
             return names;
         }
-        try (var stream = Files.list(DIR)) {
-            stream.filter(Files::isDirectory).forEach(p -> names.add(p.getFileName().toString()));
+        try (var stream = Files.list(dir)) {
+            stream.filter(Files::isDirectory)
+                    .filter(p -> !p.getFileName().toString().equals("global")) // 排除全服记录子目录
+                    .forEach(p -> names.add(p.getFileName().toString()));
         } catch (IOException e) {
             LoreRecord.LOGGER.error("读取记录列表失败", e);
         }

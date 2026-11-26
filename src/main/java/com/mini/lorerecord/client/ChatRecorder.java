@@ -1,4 +1,10 @@
-package com.mini.lorerecord;
+package com.mini.lorerecord.client;
+import com.mini.lorerecord.LoreRecord;
+import com.mini.lorerecord.classifier.MessageClassifier;
+import com.mini.lorerecord.export.LoreBook;
+import com.mini.lorerecord.export.LoreExporter;
+import com.mini.lorerecord.model.RecordEntry;
+import com.mini.lorerecord.network.LoreNetwork;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -102,9 +108,10 @@ public final class ChatRecorder {
 
     static int pause(CommandSourceStack source){
         if (recording) {
+            int count = messages.size();
             LoreExporter.savePending(recordName, messages);
             reset();
-            reply(source, "记录已暂停", ChatFormatting.YELLOW);
+            reply(source, "记录已暂停（已记录 " + count + " 条消息）", ChatFormatting.YELLOW);
             return 1;
         }
         reply(source, "当前没有进行中的记录", ChatFormatting.RED);
@@ -125,7 +132,7 @@ public final class ChatRecorder {
         recording = true;
         recordName = pending.name();
         messages.addAll(pending.messages());
-        reply(source, "继续开启记录：" + recordName + "（已记录 " + messages.size() + " 条消息）", ChatFormatting.YELLOW);
+        reply(source, "继续开启记录：" + recordName + "，（已记录 " + messages.size() + " 条消息）", ChatFormatting.YELLOW);
         return 1;
     }
 

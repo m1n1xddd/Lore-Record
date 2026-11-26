@@ -12,14 +12,17 @@ displayName="Lore Record"
 authors="m1n1xddd"
 description='''记录聊天内容？然后可以生成，额，一本书，对。你可以在游戏内阅读。饿啊，咕咕嘎嘎!'''
 
-[[dependencies.${mod_id}]]
+[[mixins]]
+config="lorerecord.mixins.json"
+
+[[dependencies.lorerecord]]
     modId="forge"
     mandatory=true
     versionRange="${forge_version_range}"
     ordering="NONE"
     side="BOTH"
 
-[[dependencies.${mod_id}]]
+[[dependencies.lorerecord]]
     modId="minecraft"
     mandatory=true
     versionRange="${minecraft_version_range}"

@@ -1,5 +1,8 @@
-package com.mini.lorerecord;
+package com.mini.lorerecord.classifier;
+import com.mini.lorerecord.config.Config;
+import com.mini.lorerecord.config.ServerConfig;
 
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 
@@ -31,7 +34,12 @@ public final class MessageClassifier {
         if (event instanceof ClientChatReceivedEvent.Player) {
             return Category.PLAYER_CHAT;
         }
-        if (event.getMessage().getContents() instanceof TranslatableContents contents) {
+        return categorize(event.getMessage());
+    }
+
+
+    public static Category categorize(Component message) {
+        if (message.getContents() instanceof TranslatableContents contents) {
             String key = contents.getKey();
             if (key.startsWith("death.")) {
                 return Category.DEATH;
@@ -51,13 +59,17 @@ public final class MessageClassifier {
     }
 
     public static boolean shouldRecord(Category category) {
+        return shouldRecord(category, false);
+    }
+
+    public static boolean shouldRecord(Category category, boolean global) {
         return switch (category) {
             case PLAYER_CHAT -> true; // 始终记录
-            case DEATH -> Config.RECORD_DEATH.get();
-            case ADVANCEMENT -> Config.RECORD_ADVANCEMENT.get();
-            case JOIN_LEAVE -> Config.RECORD_JOIN_LEAVE.get();
-            case PRIVATE -> Config.RECORD_PRIVATE.get();
-            case SYSTEM_OTHER -> Config.RECORD_TELLRAW.get();
+            case DEATH -> global ? ServerConfig.RECORD_DEATH.get() : Config.RECORD_DEATH.get();
+            case ADVANCEMENT -> global ? ServerConfig.RECORD_ADVANCEMENT.get() : Config.RECORD_ADVANCEMENT.get();
+            case JOIN_LEAVE -> global ? ServerConfig.RECORD_JOIN_LEAVE.get() : Config.RECORD_JOIN_LEAVE.get();
+            case PRIVATE -> global ? ServerConfig.RECORD_PRIVATE.get() : Config.RECORD_PRIVATE.get();
+            case SYSTEM_OTHER -> global ? ServerConfig.RECORD_TELLRAW.get() : Config.RECORD_TELLRAW.get();
         };
     }
 }

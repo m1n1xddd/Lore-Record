@@ -1,4 +1,6 @@
-package com.mini.lorerecord;
+package com.mini.lorerecord.network;
+import com.mini.lorerecord.LoreRecord;
+import com.mini.lorerecord.export.LoreBook;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +24,7 @@ public final class LoreNetwork {
 
     /** 频道协议版本 */
     private static final String VERSION = "1";
-    /** 单页 JSON 最大长度 */
+    /** 单页最大长度 */
     private static final int MAX_PAGE_LENGTH = 8192;
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
@@ -49,12 +51,12 @@ public final class LoreNetwork {
         return serverInstalled;
     }
 
-    /** 断开连接时复位（由 ChatRecorder 的 LoggingOut 事件调用） */
+    /** 断开连接时复位 */
     public static void resetServerFlag() {
         serverInstalled = false;
     }
 
-    /** 服务端：玩家进入世界时打个招呼，客户端由此知道本服安装了本模组 */
+
     @SubscribeEvent
     public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer sp) {
@@ -63,10 +65,7 @@ public final class LoreNetwork {
     }
 
 
-    /**
-     * 客户端 → 服务端：请求把一本已排好版（分页完成）的记录书作为真实物品发给玩家。
-     * 只传书名与页面 JSON 字符串列表——服务端会独立校验并重建物品。
-     */
+
     public record GiveBookPacket(String title, List<String> pages) {
 
         static void encode(GiveBookPacket msg, FriendlyByteBuf buf) {

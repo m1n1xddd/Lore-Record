@@ -1,4 +1,6 @@
-package com.mini.lorerecord;
+package com.mini.lorerecord.client;
+import com.mini.lorerecord.LoreRecord;
+import com.mini.lorerecord.export.LoreExporter;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
 
