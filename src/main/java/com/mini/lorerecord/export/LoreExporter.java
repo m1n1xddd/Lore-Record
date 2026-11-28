@@ -202,9 +202,11 @@ public final class LoreExporter {
         StringBuilder sb = new StringBuilder();
         sb.append("<!DOCTYPE html>\n<html lang=\"zh\">\n<head>\n<meta charset=\"utf-8\">\n");
         sb.append("<title>").append(escapeHtml(name)).append("</title>\n<style>\n");
+        sb.append("html,body{max-width:100vw;overflow-x:hidden}\n");
         sb.append("body{background:").append(background).append(";color:").append(foreground).append(";")
-                .append("font-family:Consolas,'Courier New',monospace;padding:1.5em;line-height:1.6}\n");
-        sb.append("p{margin:.2em 0}\n");
+                .append("font-family:Consolas,'Courier New',monospace;padding:1.5em;line-height:1.6;")
+                .append("box-sizing:border-box}\n");
+        sb.append("p{margin:.2em 0;text-align:left;overflow-wrap:anywhere;word-break:break-all}\n");
         sb.append(".obf{display:inline-block;animation:obf .2s steps(2) infinite}\n");
         sb.append("@keyframes obf{to{transform:translateX(2px)}}\n");
         sb.append("</style>\n</head>\n<body>\n")
@@ -322,6 +324,7 @@ public final class LoreExporter {
 
     private static String docxParagraph(String runs) {
         return "<w:p><w:pPr><w:spacing w:before=\"0\" w:after=\"0\" w:line=\"360\" w:lineRule=\"auto\"/>"
+                + "<w:jc w:val=\"left\"/>"
                 + "</w:pPr>" + runs + "</w:p>";
     }
 
