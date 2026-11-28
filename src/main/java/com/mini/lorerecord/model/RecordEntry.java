@@ -15,7 +15,6 @@ import java.util.Map;
 import java.util.Objects;
 
 import static com.mini.lorerecord.classifier.MessageClassifier.Category.PLAYER_CHAT;
-import static com.mini.lorerecord.classifier.MessageClassifier.Category.PRIVATE;
 
 public record RecordEntry(
         String time,
@@ -59,12 +58,12 @@ public record RecordEntry(
 
     public Component messagesWithStyle() {
         ChatFormatting theme = theme();
-        Component body = category == PLAYER_CHAT || category == PRIVATE ? recolor(message, theme) : message;
+        Component body = category == PLAYER_CHAT ? recolor(message, theme) : message;
         String label = dimension.isEmpty() ? "" : "[" + dimLabel() + "] ";
         return Component.empty()
                 .append(Component.literal(label).withStyle(theme))
                 .append(body)
-                .append(Component.literal(" " + time + " ").withStyle(ChatFormatting.GRAY));
+                .append(Component.literal("\n" + time).withStyle(ChatFormatting.GRAY));
     }
 
     //json序列化

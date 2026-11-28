@@ -111,7 +111,7 @@ public final class ChatRecorder {
             int count = messages.size();
             LoreExporter.savePending(recordName, messages);
             reset();
-            reply(source, "记录已暂停（已记录 " + count + " 条消息）", ChatFormatting.YELLOW);
+            reply(source, "记录已暂停（已记录 " + count + " 条文本）", ChatFormatting.YELLOW);
             return 1;
         }
         reply(source, "当前没有进行中的记录", ChatFormatting.RED);
@@ -132,7 +132,7 @@ public final class ChatRecorder {
         recording = true;
         recordName = pending.name();
         messages.addAll(pending.messages());
-        reply(source, "继续开启记录：" + recordName + "，（已记录 " + messages.size() + " 条消息）", ChatFormatting.YELLOW);
+        reply(source, "继续开启记录：" + recordName + "，（已记录 " + messages.size() + " 条文本）", ChatFormatting.YELLOW);
         return 1;
     }
 
@@ -181,7 +181,7 @@ public final class ChatRecorder {
 
     private static void exportAndReply(CommandSourceStack source, String name, List<RecordEntry> toSave) {
         java.nio.file.Path dir = LoreExporter.export(name, toSave);
-        reply(source, "记录已保存。保存路径：" + dir + "。使用/log book " + name + " 来获取该记录书", ChatFormatting.GRAY);
+        reply(source, "记录已保存，共记录"+ messages.size() +"条文本，欢迎下次使用！保存路径：" + dir + "。使用/log book " + name + " 来获取该记录书", ChatFormatting.YELLOW);
     }
 
     private static void reply(CommandSourceStack source, String text, ChatFormatting color) {

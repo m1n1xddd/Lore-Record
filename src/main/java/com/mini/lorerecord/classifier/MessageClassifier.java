@@ -31,10 +31,14 @@ public final class MessageClassifier {
     }
 
     public static Category categorize(ClientChatReceivedEvent event) {
+        Category byContent = categorize(event.getMessage());
+        if (byContent != Category.SYSTEM_OTHER) {
+            return byContent; // 私聊/死亡/成就等按内容识别（私聊在客户端也是 Player 事件）
+        }
         if (event instanceof ClientChatReceivedEvent.Player) {
             return Category.PLAYER_CHAT;
         }
-        return categorize(event.getMessage());
+        return Category.SYSTEM_OTHER;
     }
 
 

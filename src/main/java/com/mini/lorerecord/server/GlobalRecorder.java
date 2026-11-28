@@ -46,7 +46,9 @@ public final class GlobalRecorder {
             return;
         }
         ServerPlayer player = event.getPlayer();
-        messages.add(RecordEntry.captureServer(event.getMessage(), PLAYER_CHAT, dimensionOf(player)));
+        Component msg = Component.literal("<" + player.getName().getString() + "> ")
+                .append(event.getMessage());
+        messages.add(RecordEntry.captureServer(msg, PLAYER_CHAT, dimensionOf(player)));
     }
 
     @SubscribeEvent
@@ -66,20 +68,49 @@ public final class GlobalRecorder {
         if (text.isEmpty() || text.contains("日志记录已开启")) {
             return; // 空消息或自身的提示消息
         }
+        MessageClassifier.Category category = MessageClassifier.categorize(component);
+        if (!MessageClassifier.shouldRecord(category, true)) {
+            return;
+        }
+        record(component.copy(), category, receiver);
+    }
+
+    //只记录outgoing 避免重复
+    public static void onChatMessage(net.minecraft.network.chat.OutgoingChatMessage message,
+                                     net.minecraft.network.chat.ChatType.Bound bound,
+                                     ServerPlayer receiver) {
+        if (!recording || bound == null) {
+            return;
+        }
+        if (!bound.chatType().chat().translationKey().equals("commands.message.display.outgoing")) {
+            return; // 发送方
+        }
+        if (!MessageClassifier.shouldRecord(MessageClassifier.Category.PRIVATE, true)) {
+            return;
+        }
+        Component decorated = Component.empty()
+                .append(bound.name())
+                .append(" 悄悄对 ")
+                .append(bound.targetName())
+                .append(" 说：")
+                .append(message.content())
+                .withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC);
+        record(decorated, MessageClassifier.Category.PRIVATE, receiver);
+    }
+
+    //依旧去重【广播】
+    private static void record(Component msg, MessageClassifier.Category category, ServerPlayer player) {
+        String text = msg.getString();
         long now = System.currentTimeMillis();
         Long last = seenSignatures.get(text);
         if (last != null && now - last < DEDUP_WINDOW_MS) {
-            return; // 同一条广播发给多个玩家只记一次
+            return;
         }
         seenSignatures.put(text, now);
         if (seenSignatures.size() > 1024) {
             seenSignatures.entrySet().removeIf(e -> now - e.getValue() > DEDUP_WINDOW_MS);
         }
-        MessageClassifier.Category category = MessageClassifier.categorize(component);
-        if (!MessageClassifier.shouldRecord(category, true)) {
-            return;
-        }
-        messages.add(RecordEntry.captureServer(component.copy(), category, dimensionOf(receiver)));
+        messages.add(RecordEntry.captureServer(msg, category, dimensionOf(player)));
     }
 
     private static String dimensionOf(ServerPlayer player) {
@@ -127,7 +158,7 @@ public final class GlobalRecorder {
             int count = messages.size();
             LoreExporter.savePending(recordName, messages, true);
             reset();
-            reply(source, "记录已暂停（已记录 " + count + " 条消息），可使用 /log global continue 继续",
+            reply(source, "记录已暂停（已记录 " + count + " 条文本），使用 /log global continue 继续",
                     ChatFormatting.YELLOW);
             return 1;
         }
@@ -153,7 +184,7 @@ public final class GlobalRecorder {
         for (RecordEntry entry : messages) {
             seenSignatures.put(entry.message().getString(), now);
         }
-        reply(source, "已继续记录：" + recordName + "，（已记录" + messages.size() + " 条消息）",
+        reply(source, "已继续记录：" + recordName + "，（已记录" + messages.size() + " 条文本）",
                 ChatFormatting.YELLOW);
         return 1;
     }
@@ -182,8 +213,7 @@ public final class GlobalRecorder {
 
     private static void exportAndReply(CommandSourceStack source, String name, List<RecordEntry> toSave) {
         java.nio.file.Path dir = LoreExporter.export(name, toSave, true);
-        reply(source, "记录已保存：" + dir + "。使用 /log global book " + name + " 来获取该记录书",
-                ChatFormatting.GRAY);
+        reply(source, "记录已保存，共记录"+ messages.size() +"条文本，欢迎下次使用！保存路径：" + dir + "。使用/log global book " + name + " 来获取该记录书", ChatFormatting.YELLOW);
     }
 
     private static void reply(CommandSourceStack source, String text, ChatFormatting color) {

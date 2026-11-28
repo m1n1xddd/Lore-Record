@@ -186,7 +186,7 @@ public final class LoreExporter {
         StringBuilder sb = new StringBuilder();
         sb.append("#### &lt; ").append(name).append(" &gt; 记录开始。\n\n");
         for (RecordEntry msg : msgs) {
-            sb.append("- ").append(msg.messagesWithStyle().getString().replace("\n", " ")).append('\n');
+            sb.append("- ").append(msg.messagesWithStyle().getString().replace("\n", "  \n")).append('\n');
         }
         sb.append("#### 记录结束。\n");
         return sb.toString();
@@ -224,7 +224,7 @@ public final class LoreExporter {
     }
 
     private static String toStyledSpan(Component leaf) {
-        String text = escapeHtml(leaf.getString());
+        String text = escapeHtml(leaf.getString()).replace("\n", "<br>\n");
         Style style = leaf.getStyle();
 
         List<String> props = new ArrayList<>();

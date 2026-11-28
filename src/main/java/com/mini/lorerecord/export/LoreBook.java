@@ -19,10 +19,10 @@ import net.minecraft.world.item.WrittenBookItem;
 public final class LoreBook {
 
     private static final String TAG_LORE_RECORD = "lorerecord";
-    /** 行数 */
+    /** 行数*/
     private static final int LINES_PER_PAGE = 14;
     /** 字符数*/
-    private static final int CHARS_PER_LINE = 19;
+    private static final int CHARS_PER_LINE = 13;
 
     private LoreBook() {
     }
