@@ -132,8 +132,8 @@ public final class GlobalRecorder {
         seenSignatures.clear();
         MinecraftServer server = source.getServer();
         server.getPlayerList().broadcastSystemMessage(
-                Component.literal("日志记录已开启。").withStyle(ChatFormatting.YELLOW), false);
-        LoreRecord.LOGGER.info("聊天记录已开启：{}", name);
+                Component.literal("日志记录已开启。记录名：" + name).withStyle(ChatFormatting.YELLOW), false);
+        LoreRecord.LOGGER.info("记录已开启：{}", name);
         return 1;
     }
 
