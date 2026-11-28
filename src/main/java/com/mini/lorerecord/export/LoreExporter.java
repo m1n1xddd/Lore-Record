@@ -10,6 +10,8 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
@@ -108,6 +110,7 @@ public final class LoreExporter {
             Files.writeString(dir.resolve(name + ".md"), toMarkdown(name, msgs), StandardCharsets.UTF_8);
             Files.writeString(dir.resolve(name + ".html"), toHtmlDocument(name, msgs), StandardCharsets.UTF_8);
             Files.write(dir.resolve(name + ".json"), toJsonLines(msgs), StandardCharsets.UTF_8);
+            writeDocx(dir.resolve(name + ".docx"), name, msgs);
         } catch (IOException e) {
             LoreRecord.LOGGER.error("导出聊天记录失败", e);
         }
@@ -186,7 +189,7 @@ public final class LoreExporter {
         StringBuilder sb = new StringBuilder();
         sb.append("#### &lt; ").append(name).append(" &gt; 记录开始。\n\n");
         for (RecordEntry msg : msgs) {
-            sb.append("- ").append(msg.messagesWithStyle().getString().replace("\n", "  \n")).append('\n');
+            sb.append(msg.messagesWithStyle().getString().replace("\n", "  \n")).append('\n');
         }
         sb.append("#### 记录结束。\n");
         return sb.toString();
@@ -194,7 +197,7 @@ public final class LoreExporter {
 
     private static String toHtmlDocument(String name, List<RecordEntry> msgs) {
         boolean light = Config.HTML_THEME.get() == Config.HtmlTheme.LIGHT;
-        String background = light ? "#f6f5f5" : "#1e1e1e";
+        String background = light ? "#ffffff" : "#1e1e1e";
         String foreground = light ? "#000000" : "#ffffff";
         StringBuilder sb = new StringBuilder();
         sb.append("<!DOCTYPE html>\n<html lang=\"zh\">\n<head>\n<meta charset=\"utf-8\">\n");
@@ -250,6 +253,112 @@ public final class LoreExporter {
 
     private static String escapeHtml(String s) {
         return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;");
+    }
+
+    private static void writeDocx(Path file, String name, List<RecordEntry> msgs) throws IOException {
+        try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(file))) {
+            putZipEntry(zos, "[Content_Types].xml",
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+                            + "<Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\">"
+                            + "<Default Extension=\"rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\"/>"
+                            + "<Default Extension=\"xml\" ContentType=\"application/xml\"/>"
+                            + "<Override PartName=\"/word/document.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml\"/>"
+                            + "<Override PartName=\"/word/settings.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml\"/>"
+                            + "</Types>");
+            putZipEntry(zos, "_rels/.rels",
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+                            + "<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">"
+                            + "<Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument\" Target=\"word/document.xml\"/>"
+                            + "</Relationships>");
+            putZipEntry(zos, "word/_rels/document.xml.rels",
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+                            + "<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">"
+                            + "<Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/settings\" Target=\"settings.xml\"/>"
+                            + "</Relationships>");
+            putZipEntry(zos, "word/settings.xml",
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+                            + "<w:settings xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\">"
+                            + "<w:displayBackgroundShape/>"
+                            + "</w:settings>");
+            putZipEntry(zos, "word/document.xml", toDocxDocument(name, msgs));
+        }
+    }
+
+    private static void putZipEntry(ZipOutputStream zos, String path, String content) throws IOException {
+        zos.putNextEntry(new ZipEntry(path));
+        zos.write(content.getBytes(StandardCharsets.UTF_8));
+        zos.closeEntry();
+    }
+
+    private static String toDocxDocument(String name, List<RecordEntry> msgs) {
+        boolean light = Config.DOCX_THEME.get() == Config.HtmlTheme.LIGHT;
+        String background = light ? "F6F5F5" : "1E1E1E";
+        String foreground = light ? "000000" : "FFFFFF";
+        StringBuilder body = new StringBuilder();
+        body.append(docxParagraph(
+                docxRun("< " + name + " > 记录开始。", "898787", false, false, false, false)));
+        for (RecordEntry msg : msgs) {
+            StringBuilder runs = new StringBuilder();
+            for (Component leaf : msg.messagesWithStyle().toFlatList()) {
+                Style style = leaf.getStyle();
+                String color = style.getColor() != null
+                        ? String.format("%06X", style.getColor().getValue())
+                        : foreground;
+                runs.append(docxRun(leaf.getString(), color,
+                        style.isBold(), style.isItalic(), style.isUnderlined(), style.isStrikethrough()));
+            }
+            body.append(docxParagraph(runs.toString()));
+        }
+        body.append(docxParagraph(
+                docxRun("记录结束。", "898787", false, false, false, false)));
+        return "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+                + "<w:document xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\">"
+                + "<w:background w:color=\"" + background + "\"/>"
+                + "<w:body>" + body
+                + "<w:sectPr><w:pgSz w:w=\"11906\" w:h=\"16838\"/>"
+                + "<w:pgMar w:top=\"1134\" w:right=\"1134\" w:bottom=\"1134\" w:left=\"1134\"/>"
+                + "</w:sectPr></w:body></w:document>";
+    }
+
+    private static String docxParagraph(String runs) {
+        return "<w:p><w:pPr><w:spacing w:before=\"0\" w:after=\"0\" w:line=\"360\" w:lineRule=\"auto\"/>"
+                + "</w:pPr>" + runs + "</w:p>";
+    }
+
+    private static String docxRun(String text, String color, boolean bold, boolean italic,
+                                  boolean underline, boolean strike) {
+        StringBuilder sb = new StringBuilder("<w:r><w:rPr>");
+        sb.append("<w:rFonts w:ascii=\"Consolas\" w:hAnsi=\"Consolas\" w:eastAsia=\"Consolas\"/>");
+        sb.append("<w:color w:val=\"").append(color).append("\"/>");
+        if (bold) {
+            sb.append("<w:b/>");
+        }
+        if (italic) {
+            sb.append("<w:i/>");
+        }
+        if (underline) {
+            sb.append("<w:u w:val=\"single\"/>");
+        }
+        if (strike) {
+            sb.append("<w:strike/>");
+        }
+        sb.append("</w:rPr>");
+        String[] parts = text.split("\n", -1);
+        for (int i = 0; i < parts.length; i++) {
+            if (i > 0) {
+                sb.append("<w:br/>");
+            }
+            if (!parts[i].isEmpty()) {
+                sb.append("<w:t xml:space=\"preserve\">").append(escapeXml(parts[i])).append("</w:t>");
+            }
+        }
+        sb.append("</w:r>");
+        return sb.toString();
+    }
+
+    private static String escapeXml(String s) {
+        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+                .replace("\"", "&quot;").replace("'", "&apos;");
     }
 
     private static List<RecordEntry> parseJsonLines(List<String> lines) {

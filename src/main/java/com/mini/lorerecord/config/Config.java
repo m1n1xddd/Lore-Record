@@ -19,6 +19,9 @@ public final class Config {
     /** html主题 */
     public static final ForgeConfigSpec.EnumValue<HtmlTheme> HTML_THEME;
 
+    /** word主题 */
+    public static final ForgeConfigSpec.EnumValue<HtmlTheme> DOCX_THEME;
+
     /** 是否记录玩家加入/退出游戏的消息 */
     public static final ForgeConfigSpec.BooleanValue RECORD_JOIN_LEAVE;
     /** 是否记录死亡消息 */
@@ -35,6 +38,9 @@ public final class Config {
         HTML_THEME = builder
                 .comment("html主题：DARK=深色；LIGHT=浅色")
                 .defineEnum("htmlTheme", HtmlTheme.DARK);
+        DOCX_THEME = builder
+                .comment("word主题：DARK=深色；LIGHT=浅色")
+                .defineEnum("docxTheme", HtmlTheme.DARK);
         RECORD_JOIN_LEAVE = builder
                 .comment("记录玩家登入登出消息")
                 .define("recordJoinLeaveMessages", true);
