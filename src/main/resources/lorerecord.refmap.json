@@ -1,8 +1,0 @@
-{
-  "mappings": {
-    "com/mini/lorerecord/mixin/ServerPlayerSystemMessageMixin": {
-      "sendSystemMessage(Lnet/minecraft/network/chat/Component;)V": "m_213846_(Lnet/minecraft/network/chat/Component;)V",
-      "sendChatMessage(Lnet/minecraft/network/chat/OutgoingChatMessage;ZLnet/minecraft/network/chat/ChatType$Bound;)V": "m_245069_(Lnet/minecraft/network/chat/OutgoingChatMessage;ZLnet/minecraft/network/chat/ChatType$Bound;)V"
-    }
-  }
-}
